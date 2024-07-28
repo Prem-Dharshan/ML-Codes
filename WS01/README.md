@@ -8,7 +8,7 @@
 Explore the Pandas library using the dataset provided. Perform operations such as selecting, filtering, aggregating, joining, slicing, and dicing the data to prepare and explore the dataset.
 
 #### Dataset
-Download the dataset from the following link: [Dataset](.\IPL.csv)
+Download the dataset from the following link: [Dataset](./IPL.csv)
 
 #### Problems
 
