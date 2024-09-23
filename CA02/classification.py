@@ -1,6 +1,7 @@
 from collections import Counter
 import matplotlib.pyplot as plt
 from pandas import read_csv, DataFrame
+import seaborn as sns
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -71,7 +72,18 @@ class EvaluationMetrics:
         print('False Positive:', cm[0][1])
         print('False Negative:', cm[1][0])
         print('True Negative:', cm[1][1])
+
         return None
+    
+    def plot_confusion_matrix(y_true, y_pred, title):
+        cm = confusion_matrix(y_true, y_pred)
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                    xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        plt.title(f'Confusion Matrix - {title}')
+        plt.show()
     
     def classification_report(y_true, y_pred):
         # Generate a classification report
@@ -84,7 +96,7 @@ class EvaluationMetrics:
         print("ROC AUC Score: ", roc_auc_score(y_true, y_pred), '\n\n')
         return None
     
-    def plot_roc_curve(y_true, y_pred):
+    def plot_roc_curve(y_true, y_pred, title):
         # Calculate ROC curve
         fpr, tpr, thresholds = roc_curve(y_true, y_pred)
 
@@ -99,7 +111,7 @@ class EvaluationMetrics:
         plt.ylim([0.0, 1.0])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('Receiver Operating Characteristic (ROC) Curve')
+        plt.title(f'ROC Curve - {title}')
         plt.legend(loc='lower right')
         plt.grid()
         plt.show()
@@ -148,21 +160,23 @@ def main() -> None:
     print("KNN Classifier Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_knn)
     EvaluationMetrics.confusion_matrix(y_test, y_pred_knn)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_knn, 'KNN Classifier')
     EvaluationMetrics.classification_report(y_test, y_pred_knn)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_knn)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_knn)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_knn, 'KNN Classifier')
 
-    # svc = SVC(kernel='linear', probability=True)
-    # svc.fit(x_train, y_train)
-    # y_pred_svc = svc.predict(x_test)
-    # y_pred_proba_svc = svc.predict_proba(x_test)[:, 1] # Probability of Malignant
+    svc = SVC(kernel='linear', probability=True)
+    svc.fit(x_train, y_train)
+    y_pred_svc = svc.predict(x_test)
+    y_pred_proba_svc = svc.predict_proba(x_test)[:, 1] # Probability of Malignant
 
-    # print("SVC Classifier Metrics:")
-    # EvaluationMetrics.accuracy(y_test, y_pred_svc)
-    # EvaluationMetrics.confusion_matrix(y_test, y_pred_svc)
-    # EvaluationMetrics.classification_report(y_test, y_pred_svc)
-    # EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_svc)
-    # EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_svc)
+    print("SVC Classifier Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_svc)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_svc)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_svc, 'SVC Classifier')
+    EvaluationMetrics.classification_report(y_test, y_pred_svc)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_svc)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_svc, 'SVC Classifier')
 
     dtc = DecisionTreeClassifier()
     dtc.fit(x_train, y_train)
@@ -172,9 +186,10 @@ def main() -> None:
     print("Decision Tree Classifier Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_dtc)
     EvaluationMetrics.confusion_matrix(y_test, y_pred_dtc)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_dtc, 'Decision Tree Classifier')
     EvaluationMetrics.classification_report(y_test, y_pred_dtc)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_dtc)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc, 'Decision Tree Classifier')
 
     # Feature Importance
     feature_names = data.columns[:-1]
@@ -193,9 +208,10 @@ def main() -> None:
     print("Decision Tree Classifier with Hyperparameter Tuning Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_dtc2)
     EvaluationMetrics.confusion_matrix(y_test, y_pred_dtc2)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_dtc2, 'Decision Tree Classifier with Hyperparameter Tuning')
     EvaluationMetrics.classification_report(y_test, y_pred_dtc2)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_dtc2)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc2)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc2, 'Decision Tree Classifier with Hyperparameter Tuning')
 
     print("Feature Importance for Decision Tree Classifier with Hyperparameter Tuning:")
     features_dtc2 = DataFrame({'Feature': feature_names, 'Importance': dtc2.feature_importances_})
@@ -217,9 +233,10 @@ def main() -> None:
     print("Gaussian Naive Bayes Classifier Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_gnb)
     EvaluationMetrics.confusion_matrix(y_test, y_pred_gnb)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_gnb, 'Gaussian Naive Bayes Classifier')
     EvaluationMetrics.classification_report(y_test, y_pred_gnb)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_gnb)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb, 'Gaussian Naive Bayes Classifier')
 
     param_grid = {
         'var_smoothing' : [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]
@@ -236,9 +253,10 @@ def main() -> None:
     print("Gaussian Naive Bayes Classifier with Hyperparameter Tuning Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_gnb2)
     EvaluationMetrics.confusion_matrix(y_test, y_pred_gnb2)
+    EvaluationMetrics.plot_confusion_matrix(y_test, y_pred_gnb2, 'Gaussian Naive Bayes Classifier with Hyperparameter Tuning')
     EvaluationMetrics.classification_report(y_test, y_pred_gnb2)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_gnb2)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb2)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb2, 'Gaussian Naive Bayes Classifier with Hyperparameter Tuning')
 
     return None
     
