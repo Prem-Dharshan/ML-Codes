@@ -1,5 +1,4 @@
 from collections import Counter
-import numpy as np
 import matplotlib.pyplot as plt
 from pandas import read_csv
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
@@ -8,6 +7,7 @@ from matplotlib.colors import ListedColormap
 from imblearn.over_sampling import SMOTE
 from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 cmap = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
     
@@ -130,14 +130,27 @@ def main() -> None:
     # Create and evaluate sklearn KNN classifier
     knn = KNeighborsClassifier(n_neighbors=3)
     knn.fit(x_train, y_train)
-    y_pred_sklearn = knn.predict(x_test)
+    y_pred_knn = knn.predict(x_test)
+    y_pred_proba_knn = knn.predict_proba(x_test)[:, 1] # Probability of Malignant
     
-    print("\nSklearn KNN Classifier Metrics:")
-    EvaluationMetrics.accuracy(y_test, y_pred_sklearn)
-    EvaluationMetrics.confusion_matrix(y_test, y_pred_sklearn)
-    EvaluationMetrics.classification_report(y_test, y_pred_sklearn)
-    EvaluationMetrics.roc_auc_score(y_test, y_pred_sklearn)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_sklearn)
+    print("KNN Classifier Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_knn)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_knn)
+    EvaluationMetrics.classification_report(y_test, y_pred_knn)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_knn)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_knn)
+
+    svc = SVC(kernel='linear', probability=True)
+    svc.fit(x_train, y_train)
+    y_pred_svc = svc.predict(x_test)
+    y_pred_proba_svc = svc.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    print("SVC Classifier Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_svc)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_svc)
+    EvaluationMetrics.classification_report(y_test, y_pred_svc)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_svc)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_svc) 
 
 
     return None
