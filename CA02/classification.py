@@ -10,42 +10,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.neighbors import KNeighborsClassifier
 
 cmap = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
-
-
-class KNN: 
-    def __init__(self, k=1) -> None:
-        self.k = k
-    
-    def fit(self, x, y):
-        # Fit the training data
-        self.X_train = x
-        self.y_train = y
-    
-    def predict(self, X):
-        # Make predictions on the test data
-        predictions = [self._predict(x) for x in X]
-        return predictions
-    
-    def euclidean_distance(self, x1, x2):
-        # Compute the Euclidean distance between two vectors
-        return np.sqrt(np.sum((x1 - x2)**2))
-    
-    def _predict(self, x):
-        # Compute distances between x and all examples in the training set
-        distances = [self.euclidean_distance(x, x_train) for x_train in self.X_train]
-
-        # Get Closets K samples
-        k_indices = np.argsort(distances)[:self.k]
-
-        # Extract the labels of the K nearest neighbor training samples
-        k_nearest_labels = [self.y_train.iloc[i] for i in k_indices]
-
-        # Make predictions based on the closest k samples
-        most_common = np.bincount(k_nearest_labels).argmax()
-
-        # most_common = Counter(k_nearest_labels).most_common(1)[0][0]
-        
-        return most_common
     
 
 class PreProcessing:
@@ -162,29 +126,11 @@ def main() -> None:
     # Split the data into training and test sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
     
-    # Create a KNN classifier
-    knn = KNN(k=3)
     
-    # Fit the training data
-    knn.fit(x_train, y_train)
-    
-    # Create and evaluate custom KNN classifier
-    custom_knn = KNN(k=3)
-    custom_knn.fit(x_train, y_train)
-    y_pred_custom = custom_knn.predict(x_test)
-    
-    print("Custom KNN Classifier Metrics:")
-    EvaluationMetrics.accuracy(y_test, y_pred_custom)
-    EvaluationMetrics.confusion_matrix(y_test, y_pred_custom)
-    EvaluationMetrics.classification_report(y_test, y_pred_custom)
-    EvaluationMetrics.roc_auc_score(y_test, y_pred_custom)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_custom)
-
-
     # Create and evaluate sklearn KNN classifier
-    sklearn_knn = KNeighborsClassifier(n_neighbors=3)
-    sklearn_knn.fit(x_train, y_train)
-    y_pred_sklearn = sklearn_knn.predict(x_test)
+    knn = KNeighborsClassifier(n_neighbors=3)
+    knn.fit(x_train, y_train)
+    y_pred_sklearn = knn.predict(x_test)
     
     print("\nSklearn KNN Classifier Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_sklearn)
