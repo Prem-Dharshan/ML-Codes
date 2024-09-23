@@ -1,18 +1,26 @@
 from collections import Counter
 import matplotlib.pyplot as plt
-from pandas import read_csv
+from pandas import read_csv, DataFrame
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from matplotlib.colors import ListedColormap
 from imblearn.over_sampling import SMOTE
 from sklearn.impute import SimpleImputer
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 cmap = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
     
 
 class PreProcessing:
+
+    def normalize(x):
+        # Standardize features
+        scaler = StandardScaler()
+        return scaler.fit_transform(x), scaler
 
     def drop_na_columns(data):
         # Drop columns where all values are NaN
@@ -73,7 +81,7 @@ class EvaluationMetrics:
 
     def roc_auc_score(y_true, y_pred):
     # Calculate the AUC-ROC score
-        print("ROC AUC Score: ", roc_auc_score(y_true, y_pred))
+        print("ROC AUC Score: ", roc_auc_score(y_true, y_pred), '\n\n')
         return None
     
     def plot_roc_curve(y_true, y_pred):
@@ -104,6 +112,7 @@ def main() -> None:
     
     # Drop columns where all values are NaN
     data = PreProcessing.drop_na_columns(data)
+    data.drop('id', axis=1, inplace=True)
     
     # Map diagnosis to 0 and 1
     y = PreProcessing.map_diagnosis(data['diagnosis'])
@@ -122,6 +131,9 @@ def main() -> None:
     
     # Plot the distribution of labels
     PreProcessing.plot_labels_distribution(y)
+
+    # Standardize features and get the scaler
+    x, scaler = PreProcessing.normalize(x)
     
     # Split the data into training and test sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -140,18 +152,93 @@ def main() -> None:
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_knn)
     EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_knn)
 
-    svc = SVC(kernel='linear', probability=True)
-    svc.fit(x_train, y_train)
-    y_pred_svc = svc.predict(x_test)
-    y_pred_proba_svc = svc.predict_proba(x_test)[:, 1] # Probability of Malignant
+    # svc = SVC(kernel='linear', probability=True)
+    # svc.fit(x_train, y_train)
+    # y_pred_svc = svc.predict(x_test)
+    # y_pred_proba_svc = svc.predict_proba(x_test)[:, 1] # Probability of Malignant
 
-    print("SVC Classifier Metrics:")
-    EvaluationMetrics.accuracy(y_test, y_pred_svc)
-    EvaluationMetrics.confusion_matrix(y_test, y_pred_svc)
-    EvaluationMetrics.classification_report(y_test, y_pred_svc)
-    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_svc)
-    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_svc) 
+    # print("SVC Classifier Metrics:")
+    # EvaluationMetrics.accuracy(y_test, y_pred_svc)
+    # EvaluationMetrics.confusion_matrix(y_test, y_pred_svc)
+    # EvaluationMetrics.classification_report(y_test, y_pred_svc)
+    # EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_svc)
+    # EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_svc)
 
+    dtc = DecisionTreeClassifier()
+    dtc.fit(x_train, y_train)
+    y_pred_dtc = dtc.predict(x_test)
+    y_pred_proba_dtc = dtc.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    print("Decision Tree Classifier Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_dtc)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_dtc)
+    EvaluationMetrics.classification_report(y_test, y_pred_dtc)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_dtc)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc)
+
+    # Feature Importance
+    feature_names = data.columns[:-1]
+    dtc_importance = dtc.feature_importances_
+    print("Feature Importance:")
+    features = DataFrame({'Feature': feature_names, 'Importance': dtc_importance}, index=range(len(feature_names)))
+    features = features.sort_values('Importance', ascending=False)
+    print(features)
+
+    # Hyperparameter Tuning
+    dtc2 = DecisionTreeClassifier(criterion='entropy', ccp_alpha=0.01)
+    dtc2.fit(x_train, y_train)
+    y_pred_dtc2 = dtc2.predict(x_test)
+    y_pred_proba_dtc2 = dtc2.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    print("Decision Tree Classifier with Hyperparameter Tuning Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_dtc2)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_dtc2)
+    EvaluationMetrics.classification_report(y_test, y_pred_dtc2)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_dtc2)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_dtc2)
+
+    print("Feature Importance for Decision Tree Classifier with Hyperparameter Tuning:")
+    features_dtc2 = DataFrame({'Feature': feature_names, 'Importance': dtc2.feature_importances_})
+    features_dtc2 = features_dtc2.sort_values('Importance', ascending=False)
+    print(features_dtc2)
+
+    # Combine the two DataFrames for side-by-side display
+    # combined_features = features.merge(features_dtc2, on='Feature', suffixes=('_dtc', '_dtc2'))
+
+    # print("Feature Importance Comparison:")
+    # for index, row in combined_features.iterrows():
+    #     print(f"{row['Feature']: <30} - {row['Importance_dtc']: .4f}, {row['Importance_dtc2']: .4f}")
+
+    gnb = GaussianNB()
+    gnb.fit(x_train, y_train)
+    y_pred_gnb = gnb.predict(x_test)
+    y_pred_proba_gnb = gnb.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    print("Gaussian Naive Bayes Classifier Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_gnb)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_gnb)
+    EvaluationMetrics.classification_report(y_test, y_pred_gnb)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_gnb)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb)
+
+    param_grid = {
+        'var_smoothing' : [1e-9, 1e-8, 1e-7, 1e-6, 1e-5]
+    }
+
+    grid_search = GridSearchCV(gnb, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+    grid_search.fit(x_train, y_train)
+    print("Best Parameters:", grid_search.best_params_)
+    print("Best Score:", grid_search.best_score_)
+    print("Best Estimator:", grid_search.best_estimator_)
+    y_pred_gnb2 = grid_search.predict(x_test)
+    y_pred_proba_gnb2 = grid_search.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    print("Gaussian Naive Bayes Classifier with Hyperparameter Tuning Metrics:")
+    EvaluationMetrics.accuracy(y_test, y_pred_gnb2)
+    EvaluationMetrics.confusion_matrix(y_test, y_pred_gnb2)
+    EvaluationMetrics.classification_report(y_test, y_pred_gnb2)
+    EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_gnb2)
+    EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb2)
 
     return None
     
