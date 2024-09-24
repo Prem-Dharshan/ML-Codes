@@ -2,6 +2,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 from pandas import read_csv, DataFrame
 import seaborn as sns
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score, roc_curve
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -22,6 +23,16 @@ class PreProcessing:
         # Standardize features
         scaler = StandardScaler()
         return scaler.fit_transform(x), scaler
+    
+    
+    def apply_pca(x, n_components=None):
+        # Apply PCA for dimensionality reduction
+        pca = PCA(n_components=n_components)
+        x_pca = pca.fit_transform(x)
+        explained_variance = pca.explained_variance_ratio_
+        print(f"Explained variance by each component: {explained_variance}")
+        print(f"Total explained variance: {sum(explained_variance)}")
+        return x_pca, pca
 
     def drop_na_columns(data):
         # Drop columns where all values are NaN
@@ -68,10 +79,10 @@ class EvaluationMetrics:
         # Calculate the confusion matrix
         cm = confusion_matrix(y_true, y_pred)
         print('Confusion Matrix:\n', cm)
-        print('True Positive:', cm[0][0])
+        print('True Positive:', cm[1][1])
         print('False Positive:', cm[0][1])
         print('False Negative:', cm[1][0])
-        print('True Negative:', cm[1][1])
+        print('True Negative:', cm[0][0])
 
         return None
     
@@ -92,7 +103,7 @@ class EvaluationMetrics:
         return None
 
     def roc_auc_score(y_true, y_pred):
-    # Calculate the AUC-ROC score
+        # Calculate the AUC-ROC score
         print("ROC AUC Score: ", roc_auc_score(y_true, y_pred), '\n\n')
         return None
     
@@ -200,6 +211,11 @@ def main() -> None:
     print(features)
 
     # Hyperparameter Tuning
+    # ccp_alpha is the complexity parameter used for Minimal Cost-Complexity Pruning and reduces overfitting
+    # The best ccp_alpha value is determined using cross-validation's GridSearchCV
+    # ccp_alphas = dtc.cost_complexity_pruning_path(x_train, y_train)['ccp_alphas']
+    # Criterion is the function to measure the quality of a split
+    # Entropy is used to measure the impurity of a node
     dtc2 = DecisionTreeClassifier(criterion='entropy', ccp_alpha=0.01)
     dtc2.fit(x_train, y_train)
     y_pred_dtc2 = dtc2.predict(x_test)
@@ -257,6 +273,23 @@ def main() -> None:
     EvaluationMetrics.classification_report(y_test, y_pred_gnb2)
     EvaluationMetrics.roc_auc_score(y_test, y_pred_proba_gnb2)
     EvaluationMetrics.plot_roc_curve(y_test, y_pred_proba_gnb2, 'Gaussian Naive Bayes Classifier with Hyperparameter Tuning')
+
+    # Apply PCA
+    x_pca, pca = PreProcessing.apply_pca(x, n_components=10) # 10 components explain 95% variance
+    x_train_pca, x_test_pca, y_train_pca, y_test_pca = train_test_split(x_pca, y, test_size=0.2)
+    gnb_pca = GaussianNB()
+    gnb_pca.fit(x_train_pca, y_train_pca)
+    y_pred_gnb_pca = gnb_pca.predict(x_test_pca)
+    y_pred_proba_gnb_pca = gnb_pca.predict_proba(x_test_pca)[:, 1] # Probability of Malignant
+    
+    print("Gaussian Naive Bayes Classifier with PCA Metrics:")
+    EvaluationMetrics.accuracy(y_test_pca, y_pred_gnb_pca)
+    EvaluationMetrics.confusion_matrix(y_test_pca, y_pred_gnb_pca)
+    EvaluationMetrics.plot_confusion_matrix(y_test_pca, y_pred_gnb_pca, 'Gaussian Naive Bayes Classifier with PCA')
+    EvaluationMetrics.classification_report(y_test_pca, y_pred_gnb_pca)
+    EvaluationMetrics.roc_auc_score(y_test_pca, y_pred_proba_gnb_pca)
+    EvaluationMetrics.plot_roc_curve(y_test_pca, y_pred_proba_gnb_pca, 'Gaussian Naive Bayes Classifier with PCA')
+
 
     return None
     
