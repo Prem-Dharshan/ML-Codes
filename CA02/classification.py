@@ -24,7 +24,6 @@ class PreProcessing:
         scaler = StandardScaler()
         return scaler.fit_transform(x), scaler
     
-    
     def apply_pca(x, n_components=None):
         # Apply PCA for dimensionality reduction
         pca = PCA(n_components=n_components)
@@ -129,6 +128,16 @@ class EvaluationMetrics:
         return None
 
 
+def plot_knn_clusters(knn_model, x_train, y_train):
+    x_train_pca = PCA(n_components=2).fit_transform(x_train)  # Reduce to 2D
+    knn_model.fit(x_train_pca, y_train)
+    
+    plt.scatter(x_train_pca[:, 0], x_train_pca[:, 1], c=y_train, cmap='coolwarm', edgecolor='k')  # Plot points
+    plt.title('KNN Clusters')
+    plt.show()
+
+
+
 def main() -> None:
     # Load the data
     data = read_csv('./dataset/breast_cancer.csv')
@@ -167,6 +176,8 @@ def main() -> None:
     knn.fit(x_train, y_train)
     y_pred_knn = knn.predict(x_test)
     y_pred_proba_knn = knn.predict_proba(x_test)[:, 1] # Probability of Malignant
+
+    plot_knn_clusters(knn, x_train, y_train)
     
     print("KNN Classifier Metrics:")
     EvaluationMetrics.accuracy(y_test, y_pred_knn)

@@ -1,0 +1,6 @@
+
+
+----- PCA with 2 components -----
+KNN (PCA: 2 components) Metrics:
+SVC (PCA: 2 components) Metrics:
+Decision Tree (PCA: 2 components) Metrics:
