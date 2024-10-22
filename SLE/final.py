@@ -39,6 +39,15 @@ class PreProcessing:
 
     @staticmethod
     def apply_lda(x, y, n_components=None):
+        n_classes = len(np.unique(y))
+        n_features = x.shape[1]
+
+        # LDA components cannot exceed min(n_features, n_classes - 1)
+        max_components = min(n_features, n_classes - 1)
+
+        # Adjust n_components to be valid
+        if n_components is None or n_components > max_components:
+            n_components = max_components
         lda = LinearDiscriminantAnalysis(n_components=n_components)
         return lda.fit_transform(x, y)
 
@@ -46,10 +55,15 @@ class PreProcessing:
 class EvaluationMetrics:
     @staticmethod
     def plot_clusters(x, labels, title):
-        plt.scatter(x[:, 0], x[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
+        if x.shape[1] == 1:
+            plt.scatter(x[:, 0], np.zeros_like(x[:, 0]), c=labels, cmap='viridis', edgecolor='k', s=50)
+            plt.xlabel('Component 1')
+        else:
+            plt.scatter(x[:, 0], x[:, 1], c=labels, cmap='viridis', edgecolor='k', s=50)
+            plt.xlabel('Component 1')
+            plt.ylabel('Component 2')
+        
         plt.title(title)
-        plt.xlabel('PC 1')
-        plt.ylabel('PC 2')
         plt.colorbar(label='Cluster Label')
         plt.show()
 
@@ -133,16 +147,16 @@ def evaluate_clusters(x, cluster_labels, title="PCA with 2 components"):
 
 
 # Load and preprocess data
-data = pd.read_csv("./dataset/plant.csv")
-data = data.drop('CUST_ID', axis=1)
+data = pd.read_csv("./dataset/dataset.csv")
+# data = data.drop('CUST_ID', axis=1)
 PreProcessing.data_description(data)
 x = PreProcessing.drop_na_columns(data)
-x = pd.get_dummies()
+x = pd.get_dummies(x)
 x = PreProcessing.normalize(PreProcessing.impute_missing_values(x))
 
 # Apply PCA for 2 to 4 components and perform clustering
 max_k = 5
-for n_components in range(2, 4):
+for n_components in range(2, 5):
     print(f"\nApplying PCA with {n_components} components.")
     x_pca = PreProcessing.apply_pca(x, n_components)
     
