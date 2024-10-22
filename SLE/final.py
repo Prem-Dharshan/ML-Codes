@@ -133,14 +133,16 @@ def evaluate_clusters(x, cluster_labels, title="PCA with 2 components"):
 
 
 # Load and preprocess data
-data = pd.read_csv("./dataset/credit_card.csv").drop('CUST_ID', axis=1)
+data = pd.read_csv("./dataset/plant.csv")
+data = data.drop('CUST_ID', axis=1)
 PreProcessing.data_description(data)
-x = pd.get_dummies(PreProcessing.drop_na_columns(data))  # Convert categorical to dummies
+x = PreProcessing.drop_na_columns(data)
+x = pd.get_dummies()
 x = PreProcessing.normalize(PreProcessing.impute_missing_values(x))
 
 # Apply PCA for 2 to 4 components and perform clustering
 max_k = 5
-for n_components in range(2, 5):
+for n_components in range(2, 4):
     print(f"\nApplying PCA with {n_components} components.")
     x_pca = PreProcessing.apply_pca(x, n_components)
     
