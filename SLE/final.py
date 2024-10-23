@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, SpectralClustering
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from sklearn.cluster import DBSCAN, AgglomerativeClustering, KMeans, SpectralClustering
+from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
